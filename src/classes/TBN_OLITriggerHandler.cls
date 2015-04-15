@@ -40,9 +40,9 @@ public with sharing class TBN_OLITriggerHandler
 					
 				//Map of Product Ids and their related list of OLIs.
 				if(mapProdIdsOLIs.containsKey(objOLI.OpportunityId))
-					mapProdIdsOLIs.get(objOLI.OpportunityId).add(objOLI);
+					mapProdIdsOLIs.get(objOLI.Product2Id).add(objOLI);
 				else
-					mapProdIdsOLIs.put(objOLI.OpportunityId, new List<OpportunityLineItem>{objOLI});
+					mapProdIdsOLIs.put(objOLI.Product2Id, new List<OpportunityLineItem>{objOLI});
 			}
 			
 			//Quering Products related to ProductGroup 

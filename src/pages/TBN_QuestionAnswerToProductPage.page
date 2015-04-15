@@ -1,8 +1,36 @@
 <!-- 
 @PageName		: TBN_QuestionAnswerToProductPage
-@Createddate	: 15/Apr/2015
+@Createddate	: 15/Apr/2015 
 @Description	: Page to get answer for questions related to product.
  -->
-<apex:page >
-
+<apex:page controller="TBN_QuestionAnswerToProduct" sidebar="false">
+	<apex:form id="frmId"> 
+		<!-- Error Message -->
+		<apex:outputpanel rendered="{! showPageMessage}">
+			<apex:pageMessages />
+		</apex:outputpanel>
+		
+		<!-- To show all Question and Answer -->
+		<apex:outputpanel rendered="{! !showPageMessage}">
+			<div style="height:0px;">&nbsp;</div>
+			<!--  
+			<ul id="tree">
+			    <apex:repeat value="{!getQuestionAnswerToProduct}" var="parent">
+			        <li><strong><apex:outputtext style="color:blue;" escape="false" value="{!parent.gparent.Name}"/></strong>
+			             <ul>
+			                 <apex:repeat value="{!parent.parent}" var="child">
+			                    <li><span class="formattextcon"><apex:outputtext style="color:green;" escape="false" value="{!child.Name}"/></span>
+			                        <ul>
+			                            <apex:repeat value="{!child.Answers__r}" var="gchildren">
+			                               <li> <span class="formattextcon"> <apex:outputtext escape="false" style="color:red;" value="{!gchildren.name}"/> <b>||</b> &nbsp;<apex:outputtext escape="false" value="{!gchildren.id}"/> </span> </li>
+			                            </apex:repeat>
+			                        </ul>       
+			                    </li>
+			                 </apex:repeat>  
+			             </ul>  
+			        </li>
+			    </apex:repeat>
+			</ul>-->
+		</apex:outputpanel>
+	</apex:form>
 </apex:page>
