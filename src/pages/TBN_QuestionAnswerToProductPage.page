@@ -1,8 +1,68 @@
 <!-- 
-@PageName		: TBN_QuestionAnswerToProductPage
-@Createddate	: 15/Apr/2015
-@Description	: Page to get answer for questions related to product.
+@PageName       : TBN_QuestionAnswerToProductPage
+@Createddate    : 15/Apr/2015 
+@Description    : Page to get answer for questions related to product.
  -->
-<apex:page >
-
+<apex:page controller="TBN_QuestionAnswerToProduct" sidebar="false">
+<!-- <apex:includeScript value="{!URLFOR($Resource.jquery)}"  /> -->
+    <apex:form id="frmId"> 
+        <!-- Error Message -->
+        <apex:outputpanel rendered="{! showPageMessage}">
+            <apex:pageMessages />
+        </apex:outputpanel>
+        
+        <!-- To show all Question and Answer -->
+        <apex:outputpanel rendered="{! !showPageMessage}">
+            <div><h2><p>Products and their corresponding questions and answers</p></h2> &nbsp;</div>
+            <br></br><br></br>
+            <ul>
+            	<div id="btnpanel">
+				<apex:outputPanel style="margin-left: 20%;">
+					<apex:commandButton value="Save" action="{!saveAnswers}" />
+				</apex:outputPanel>
+				</div>
+            	
+            	<apex:variable value="{!1}" var="quesNo" />
+                <apex:repeat value="{!lstWrapperClass}" var="parent">
+                    <li><strong><apex:outputtext style="color:blue;" escape="false" value="Product Name: {!parent.objProdAsGParent.Name}"/></strong>
+                         <ul>
+                             <apex:repeat value="{!parent.lstQuesAsParent}" var="child">
+                                <li><span><apex:outputtext style="color:green;" escape="false" value="Q-{!quesNo}. {!child.Question_Description__c}"/></span>
+                                    <ul>
+                                        <apex:outputPanel> 
+	                                        <apex:repeat value="{!child.Answers__r}" var="gchildren">
+												<apex:outputPanel rendered="{!child.Question_Type__c == 'Text'}"> 
+													<li> <span> <apex:inputfield style="color:red;" value="{!gchildren.Answer_Value__c}" /></span> </li>
+												</apex:outputPanel>
+												<apex:outputPanel rendered="{!child.Question_Type__c == 'Boolean'}"> 
+													<li> <span> <apex:inputCheckBox value="{!gchildren.Answer_Type__c}"/></span> </li>
+												</apex:outputPanel>
+												<apex:outputPanel rendered="{!child.Question_Type__c == 'Picklist'}"> 
+													<li> <span> <apex:selectList value="{!gchildren.Question__r.Prospected_Answer__c}"/></span> </li>
+												</apex:outputPanel>
+	                                        </apex:repeat>
+                                        </apex:outputpanel>
+                                    </ul>       
+                                </li>
+                             <apex:variable value="{!quesNo+1}" var="quesNo"/>
+                             </apex:repeat>  
+                         </ul>  
+                    </li>
+                <apex:variable value="{!quesNo-quesNo+1}" var="quesNo"/>
+                </apex:repeat>
+            </ul>
+        </apex:outputpanel>
+        <style>
+        .hide{display:none;}
+        </style>
+        <script>
+      
+        $('#putAns').addClass('hide');
+        function showAnswerInput()
+        {
+            $('#putAns').show;
+        }
+        
+        </script>
+    </apex:form>
 </apex:page>
