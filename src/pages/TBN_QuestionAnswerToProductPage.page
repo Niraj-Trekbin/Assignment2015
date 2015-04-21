@@ -1,8 +1,143 @@
 <!-- 
-@PageName		: TBN_QuestionAnswerToProductPage
-@Createddate	: 15/Apr/2015
-@Description	: Page to get answer for questions related to product.
+@PageName       : TBN_QuestionAnswerToProductPage
+@Createddate    : 15/Apr/2015 
+@Description    : Page to get answer for questions related to product.
  -->
-<apex:page >
-
+<apex:page controller="TBN_QuestionAnswerToProduct" sidebar="false" tabStyle="Opportunity">
+    
+    <style>
+        .content{
+            float: left;
+            vertical-align: middle; 
+            padding-left: 5px;
+            width: 70%;
+            margin-bottom: 10px;
+        }
+        
+        .opportunityTab .pageTitleIcon, .individualPalette .opportunityBlock .pageTitleIcon {
+            background-image: url(/img/sprites/master.png);
+            background-position: 0 -1238px;
+            width: 32px;
+            height: 32px;
+        }
+        
+        .pageTitleIcon {
+            display: inline;
+            float: left;
+            width: 32px;
+            margin-right: 5px;
+        }
+        
+        .pageType {
+            font-size: .9em;
+            font-weight: bold;
+            color: #4A4A56;
+            padding-left: 1px;
+        }
+        
+        .pageDescription {
+            font-size: 1.8em;
+            font-weight: normal;
+            line-height: 1.1em;
+        }
+    </style>
+    
+    <apex:form id="frmId"> 
+        
+        <!-- This div is to display Opportunity tab image and its name  -->
+        <div class="content">
+            <img src="/s.gif" alt="Opportunity" class="pageTitleIcon" title="Opportunity"/>
+            <h1 class="pageDescription">{!objOpportunity.Name}</h1>
+            <br></br>
+            <h2 class = "pageType">Products and corresponding questions and answers</h2>
+            <br></br>
+        </div>
+        
+        <div style="float:left">
+            <!-- Error Message -->
+            <apex:outputpanel rendered="{! showPageMessage}">
+                <apex:pageMessages />
+            </apex:outputpanel>
+        </div>         
+        
+        <!-- To show all Question and Answer -->
+        <apex:outputpanel id="opId1" rendered="{! !showPageMessage}">
+            <br/>
+            <apex:pageBlock title="">
+            <ul>
+                <apex:variable value="{!1}" var="quesNo" />
+                <apex:repeat value="{!QuestionAnswerForProduct}" var="parent">
+                    <li><strong><apex:outputtext style="color:blue;" escape="false" value="{!parent.objProdAsGParent.Name}"/></strong>
+                         <ul>
+                             <apex:repeat value="{!parent.lstQuesAsParent}" var="child">
+                                <li><span><apex:outputtext style="color:red;" escape="false" value="Q-{!quesNo}. {!child.Question__c}"/></span><br/>
+                                        
+                                    <apex:outputPanel rendered="{!child.Answers__r.size <= 0}">
+                                        <li> <span>Ans: <apex:inputField rendered="{!child.Type__c == 'Textarea'}" style="color:green;" value="{!parent.mapAnswers[parent.objProdAsGParent.Name+child.id].Answer__c}" />
+                                            <apex:inputCheckBox rendered="{!child.Type__c == 'Boolean'}" style="color:green;" value="{!parent.mapBolAnswers[parent.objProdAsGParent.Name+child.id]}" />
+                                            <apex:selectList rendered="{!child.Type__c == 'Picklist'}" value="{!parent.mapOptions[parent.objProdAsGParent.Name+child.id]}" size="1" style="color:green;" >
+                                                <apex:selectOptions value="{!parent.mapSelectOptions[parent.objProdAsGParent.Name+child.id]}"/>
+                                            </apex:selectList>
+                                                                    
+                                            </span> 
+                                        </li>
+                                    </apex:outputPanel>
+                                    
+                                    <apex:outputPanel rendered="{!child.Answers__r.size > 0}">                         
+                                        <apex:repeat value="{!child.Answers__r}" var="gchildren">
+                                           <li><span>Ans:
+                                                <apex:inputField rendered="{!child.Type__c == 'Textarea'}" style="color:green;" value="{!parent.mapAnswers[parent.objProdAsGParent.Name+child.id].Answer__c}" />
+                                                <apex:inputCheckBox rendered="{!child.Type__c == 'Boolean'}" style="color:green;" value="{!parent.mapBolAnswers[parent.objProdAsGParent.Name+child.id]}" />
+                                                <apex:selectList rendered="{!child.Type__c == 'Picklist'}" value="{!parent.mapOptions[parent.objProdAsGParent.Name+child.id]}" size="1" style="color:green;" >
+                                                    <apex:selectOptions value="{!parent.mapSelectOptions[parent.objProdAsGParent.Name+child.id]}"/>
+                                                </apex:selectList>
+                                            </span></li>
+                                        </apex:repeat>
+                                    </apex:outputPanel>
+                                </li>
+                                <apex:variable value="{!quesNo+1}" var="quesNo"/>
+                             </apex:repeat>  
+                         </ul>  
+                    </li>
+                    <apex:variable value="{!quesNo-quesNo+1}" var="quesNo"/>
+                </apex:repeat>
+            </ul>
+            <apex:pageBlockButtons id="bagablockBtn">
+                <apex:commandButton value="Save" action="{!saveAnswers}" status="loading" rerender="opId1"/>
+            </apex:pageBlockButtons>
+        
+            <!-- Reloading Action Status -->
+            <apex:actionstatus id="loading" startText="Requesting...">
+                <apex:facet name="start" >
+                    <div id="loadingComponent" >
+                    <div id="salesforceSource_blurybackground" 
+                        style="position:absolute; left:1px; top:1px; width:100%; height:100%; text-align:center; vertical-align: middle; 
+                        background-color: #dcdcdc; opacity:0.7;filter:alpha(opacity=60)"></div>
+                    <div id="ManageMembersViewport_loading" class="waitingSearchDiv" style="width: 100%; height: 80%; display: ''; ">
+                        <div style="width: 144px;vertical-align: middle;" class="waitingHolder">
+                            <table align="center" valign="top" style="width: 100%; height: 30%">
+                                <tr align="center" valign="top" style="width: 100%; height: 30%">
+                                    <td valign="top"><img src="/img/loading.gif"/><span class="waitingDescription"><b>Saving...</b></span></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="ManageMembersViewport_loading" class="waitingSearchDiv" style="width: 100%; height: 100%; display: ''; "/>
+                        <script>document.getElementById('ManageMembersViewport_loading').height = window.innerHeight * (3/4);</script>
+                    </div>
+                </apex:facet>
+                <apex:facet name="stop"/>
+            </apex:actionstatus>
+            
+        </apex:pageBlock>
+        </apex:outputpanel>
+        
+        <apex:actionFunction name="insertAnswersRecords" action="{!insertAnswers}" rerender="opId1"/> <!-- frmId-->
+        <script>
+            window.onload = function(){
+                insertAnswersRecords();
+            }
+        </script>
+       
+    </apex:form>
 </apex:page>
