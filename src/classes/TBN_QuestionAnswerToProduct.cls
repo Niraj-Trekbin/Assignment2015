@@ -10,10 +10,13 @@ public with sharing class TBN_QuestionAnswerToProduct
     public List<wrapperQuestionAnswerToProduct> lstWrapperClass;
     public Boolean showPageMessage                                { get; set; }
     public Opportunity objOpportunity                             { get; set; }
+    public Integer intTotal                                       { get; set; }
+    
     
     /************Constructor***********/
     public TBN_QuestionAnswerToProduct()
     {
+        intTotal = 0;
         // Checks whether url has Opportunity Id with its value or not.
         if(Apexpages.currentPage().getParameters().containsKey('oppId') &&
         Apexpages.currentPage().getParameters().get('oppId').length() >= 15 &&
@@ -22,11 +25,16 @@ public with sharing class TBN_QuestionAnswerToProduct
             strOpportunityId = Apexpages.currentPage().getParameters().get('oppId');
             lstWrapperClass = new List<wrapperQuestionAnswerToProduct>();
             
-            objOpportunity = [Select Id, Name From Opportunity Where Id =: strOpportunityId];
+            objOpportunity = [Select Id, Name, Answer_Done__c, Answer_Pending__c 
+        					From Opportunity 
+        					Where Id =: strOpportunityId];
+            
+            intTotal = integer.valueOf(objOpportunity.Answer_Pending__c) + integer.valueOf(objOpportunity.Answer_Done__c);
             
             list<OpportunityLineItem> lstOLI  = [Select Id, Name, OpportunityId, Product2Id, Product2.Product_Group__c
-                                                        From OpportunityLineItem
-                                                        Where OpportunityId =: strOpportunityId];
+                                                From OpportunityLineItem
+                                                Where OpportunityId =: strOpportunityId];
+            
             
             if(lstOLI.isEmpty())
             {
@@ -76,6 +84,7 @@ public with sharing class TBN_QuestionAnswerToProduct
                     lstValues = objQues.values__c.split(',');
                     for(string strValue : lstValues )
                     {
+                        strValue = strValue.trim();
                         lstSelOptions.add(new SelectOption(strValue, strValue));
                     } 
                 }
@@ -150,28 +159,41 @@ public with sharing class TBN_QuestionAnswerToProduct
         list<Answer__c> lstToUpdateAnswers =  new List<Answer__c>();
         set<Answer__c> setToRemoveDupes = new set<Answer__c>();
         
-        //List of all answers which have been updated on page to save in DB.
-        for(wrapperQuestionAnswerToProduct objWrapperClass :lstWrapperClass)
-        {   
-            for(Question__c objQues: objWrapperClass.lstQuesAsParent)
-            {
-                if(objQues.Type__c == 'picklist')
-                    objWrapperClass.mapAnswers.get(objWrapperClass.objProdAsGParent.Name+objQues.id).Answer__c = objWrapperClass.mapOptions.get(objWrapperClass.objProdAsGParent.Name+objQues.id);
-                
-                if(objQues.Type__c == 'Boolean')
-                    objWrapperClass.mapAnswers.get(objWrapperClass.objProdAsGParent.Name+objQues.id).Answer__c = string.ValueOF(objWrapperClass.mapBolAnswers.get(objWrapperClass.objProdAsGParent.Name+objQues.id));
-                
-                lstToUpdateAnswers.add(objWrapperClass.mapAnswers.get(objWrapperClass.objProdAsGParent.Name+objQues.id)); 
+        try{
+            
+            for(wrapperQuestionAnswerToProduct objWrapperClass :lstWrapperClass)
+            {   
+                for(Question__c objQues: objWrapperClass.lstQuesAsParent)
+                {
+                    if(objWrapperClass.mapAnswers.get(objWrapperClass.objProdAsGParent.Name+objQues.id).Answer__c != null && objWrapperClass.mapAnswers.get(objWrapperClass.objProdAsGParent.Name+objQues.id).Answer__c != '') {
+                        
+                        objWrapperClass.mapAnswers.get(objWrapperClass.objProdAsGParent.Name+objQues.id).Answer_Given__c = true;
+                    }
+                    if(objQues.Type__c == 'picklist')
+                        objWrapperClass.mapAnswers.get(objWrapperClass.objProdAsGParent.Name+objQues.id).Answer__c = objWrapperClass.mapOptions.get(objWrapperClass.objProdAsGParent.Name+objQues.id);
+                    
+                    if(objQues.Type__c == 'Boolean')
+                        objWrapperClass.mapAnswers.get(objWrapperClass.objProdAsGParent.Name+objQues.id).Answer__c = string.ValueOF(objWrapperClass.mapBolAnswers.get(objWrapperClass.objProdAsGParent.Name+objQues.id));
+                    
+                    lstToUpdateAnswers.add(objWrapperClass.mapAnswers.get(objWrapperClass.objProdAsGParent.Name+objQues.id)); 
+                }
             }
+            
+            setToRemoveDupes.addAll(lstToUpdateAnswers);
+            lstToUpdateAnswers.clear();
+            lstToUpdateAnswers.addAll(setToRemoveDupes);
+            
+            //Upsert records into DB.
+            if(lstToUpdateAnswers.size() > 0)
+                upsert lstToUpdateAnswers;
         }
         
-        setToRemoveDupes.addAll(lstToUpdateAnswers);
-        lstToUpdateAnswers.clear();
-        lstToUpdateAnswers.addAll(setToRemoveDupes);
+        catch(Exception e) {
+            
+            system.debug('***** Excption****'+e);
+        }
+        //List of all answers which have been updated on page to save in DB.
         
-        //Upsert records into DB.
-        if(lstToUpdateAnswers.size() > 0)
-            upsert lstToUpdateAnswers;
     }
     /******End saveAnswers method*******/
     
